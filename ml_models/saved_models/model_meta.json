@@ -1,0 +1,35 @@
+{
+  "accuracy": 94.8,
+  "features": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall"
+  ],
+  "classes": [
+    "Bajra",
+    "Banana",
+    "Barley",
+    "Chickpea",
+    "Cotton",
+    "Groundnut",
+    "Jowar",
+    "Jute",
+    "Lentil",
+    "Maize",
+    "Mango",
+    "Mustard",
+    "Onion",
+    "Potato",
+    "Rice",
+    "Soybean",
+    "Sugarcane",
+    "Sunflower",
+    "Tomato",
+    "Wheat"
+  ],
+  "n_estimators": 300
+}

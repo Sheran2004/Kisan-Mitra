@@ -1,0 +1,79 @@
+{
+  "accuracy": 91.5,
+  "diseases": [
+    "Anthracnose",
+    "Bacterial Wilt",
+    "Downy Mildew",
+    "Early Blight",
+    "Healthy",
+    "Late Blight",
+    "Leaf Blight",
+    "Leaf Spot",
+    "Nutrient Deficiency",
+    "Powdery Mildew",
+    "Rust Disease",
+    "Yellow Mosaic Virus"
+  ],
+  "remedies": {
+    "Healthy": {
+      "status": "healthy",
+      "remedy": "Fasal bilkul theek hai! Niyamit dekhbhal jaari rakho.",
+      "prevention": "Regular monitoring karte raho."
+    },
+    "Leaf Blight": {
+      "status": "disease",
+      "remedy": "Mancozeb 2g/liter paani mein milakar spray karein. Beemari ke patte hata dein.",
+      "prevention": "Zyada paani dene se bachein. Crop rotation karein."
+    },
+    "Powdery Mildew": {
+      "status": "disease",
+      "remedy": "Sulfur-based fungicide spray karein (Sulphex 3g/L). Subah spray best time hai.",
+      "prevention": "Plants ke beech space rakhein. Overwatering avoid karein."
+    },
+    "Rust Disease": {
+      "status": "disease",
+      "remedy": "Propiconazole (Tilt 25EC) 1ml/liter paani mein spray karein.",
+      "prevention": "Resistant varieties use karein. Infected plants hata dein."
+    },
+    "Leaf Spot": {
+      "status": "disease",
+      "remedy": "Copper Oxychloride 3g/liter spray karein. 2 hafte mein 2 baar.",
+      "prevention": "Seedon ko overwater mat karein. Good drainage rakho."
+    },
+    "Bacterial Wilt": {
+      "status": "disease",
+      "remedy": "Streptomycin antibiotic spray (100ppm). Infected plants turant nikalo.",
+      "prevention": "Certified disease-free seeds use karein."
+    },
+    "Downy Mildew": {
+      "status": "disease",
+      "remedy": "Metalaxyl + Mancozeb (Ridomil Gold) 2.5g/L spray karein.",
+      "prevention": "Morning mein paani dein, raat ko nahi. Spacing badhao."
+    },
+    "Anthracnose": {
+      "status": "disease",
+      "remedy": "Carbendazim 1g/liter spray karein. Infected fruits/leaves hatao.",
+      "prevention": "Healthy seeds use karein. Field saaf rakho."
+    },
+    "Yellow Mosaic Virus": {
+      "status": "disease",
+      "remedy": "Koi direct ilaj nahi \u2014 infected plants hatao. Whitefly control karein (Imidacloprid spray).",
+      "prevention": "Virus-resistant varieties lagao. Whitefly se bachao."
+    },
+    "Early Blight": {
+      "status": "disease",
+      "remedy": "Chlorothalonil 2g/liter spray karein. Weekly spraying karein.",
+      "prevention": "Mulching karein. Infected patte hatate raho."
+    },
+    "Late Blight": {
+      "status": "disease",
+      "remedy": "Cymoxanil + Mancozeb spray karein. Turant action zaruri hai!",
+      "prevention": "Certified seeds use karein. Avoid overhead irrigation."
+    },
+    "Nutrient Deficiency": {
+      "status": "deficiency",
+      "remedy": "Soil test karwao. NPK balanced fertilizer daalein. Micronutrient spray karein.",
+      "prevention": "Regular soil testing. Balanced fertilization plan banao."
+    }
+  }
+}

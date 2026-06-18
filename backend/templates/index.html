@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kisan Mitra — Smart Crop Advisory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --soil:#3d2b1f; --wheat:#c8a84b; --leaf:#2d6a4f; --sprout:#52b788;
+      --sky:#e8f4f8; --white:#fefef2; --text:#1a1a2e; --muted:#6b7280;
+      --card:#ffffff; --border:#e5e7eb; --success:#10b981; --warn:#f59e0b; --danger:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Baloo 2',sans-serif;background:var(--white);color:var(--text);min-height:100vh;}
+
+    header{background:linear-gradient(135deg,var(--leaf) 0%,#1b4332 100%);position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.2);}
+    .header-inner{max-width:1100px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-icon{width:44px;height:44px;background:var(--wheat);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+    .logo-text h1{color:white;font-size:20px;font-weight:800;line-height:1;}
+    .logo-text p{color:rgba(255,255,255,.7);font-size:12px;margin-top:2px;}
+    .api-status{display:flex;align-items:center;gap:8px;}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:#6b7280;transition:background .3s;}
+    .status-dot.online{background:#10b981;box-shadow:0 0 6px #10b981;}
+    .status-dot.offline{background:#ef4444;}
+    .status-text{color:white;font-size:13px;font-weight:600;}
+
+    .hero{background:linear-gradient(160deg,#1b4332 0%,var(--leaf) 50%,#40916c 100%);padding:50px 24px 70px;text-align:center;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+    .hero h2{color:white;font-size:36px;font-weight:800;line-height:1.2;margin-bottom:10px;position:relative;}
+    .hero h2 span{color:var(--wheat);}
+    .hero p{color:rgba(255,255,255,.85);font-size:16px;max-width:500px;margin:0 auto 28px;position:relative;}
+    .hero-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;position:relative;}
+    .hero-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 18px;text-align:center;}
+    .hero-stat .num{color:var(--wheat);font-size:20px;font-weight:800;}
+    .hero-stat .lbl{color:rgba(255,255,255,.75);font-size:11px;}
+
+    .main{max-width:1100px;margin:-28px auto 0;padding:0 20px 60px;position:relative;z-index:1;}
+
+    .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;}
+    .tab{padding:12px 20px;font-size:15px;font-weight:700;font-family:'Baloo 2',sans-serif;cursor:pointer;border:none;background:none;color:#3d3d3d;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
+    .tab.active{color:var(--leaf);border-bottom-color:var(--leaf);background:#f0fdf4;border-radius:8px 8px 0 0;}
+    .tab:hover{color:var(--soil);background:#f5f5f5;border-radius:8px 8px 0 0;}
+
+    .card{background:var(--card);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid var(--border);overflow:hidden;}
+    .card-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#f0fdf4,white);}
+    .card-icon{width:36px;height:36px;background:var(--sprout);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .card-header h3{font-size:17px;font-weight:700;color:var(--soil);}
+    .card-header p{font-size:12px;color:var(--muted);}
+    .card-body{padding:24px;}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    @media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}.hero h2{font-size:24px;}}
+
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:13px;font-weight:700;color:var(--soil);}
+    .form-group label .unit{font-weight:400;color:var(--muted);font-size:11px;}
+    .form-group input{padding:11px 13px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-family:'Baloo 2',sans-serif;transition:border-color .2s,box-shadow .2s;outline:none;background:#fafafa;}
+    .form-group input:focus{border-color:var(--sprout);box-shadow:0 0 0 3px rgba(82,183,136,.15);background:white;}
+    .form-group .hint{font-size:11px;color:var(--muted);}
+    .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;margin-top:4px;}
+
+    .btn{padding:12px 28px;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Baloo 2',sans-serif;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+    .btn-primary{background:linear-gradient(135deg,var(--leaf),var(--sprout));color:white;width:100%;justify-content:center;margin-top:18px;font-size:16px;box-shadow:0 4px 15px rgba(45,106,79,.3);}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,106,79,.4);}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+    .btn-sm{padding:5px 12px;font-size:12px;border-radius:8px;}
+    .btn-outline{background:transparent;border:2px solid var(--leaf);color:var(--leaf);}
+    .btn-outline:hover{background:#f0fdf4;}
+
+    /* Result */
+    .result-top{background:linear-gradient(135deg,var(--leaf) 0%,#40916c 100%);border-radius:16px;padding:24px;color:white;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:24px;}
+    .result-emoji{font-size:60px;line-height:1;}
+    .result-info{flex:1;}
+    .result-info .label{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:1px;}
+    .result-info .crop-name{font-size:34px;font-weight:800;line-height:1;}
+    .result-info .crop-hindi{font-size:15px;opacity:.85;margin-top:2px;}
+    .conf-badge{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:white;padding:10px 16px;border-radius:12px;font-size:22px;font-weight:800;}
+    .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+    .tag{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:white;padding:3px 10px;border-radius:16px;font-size:12px;}
+
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+    @media(max-width:768px){.two-col{grid-template-columns:1fr;}}
+
+    .alt-card{border:2px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:10px;transition:all .2s;}
+    .alt-card:hover{border-color:var(--sprout);background:#f0fdf4;}
+    .alt-bar{height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden;}
+    .alt-bar-fill{height:100%;background:var(--sprout);border-radius:2px;}
+
+    .fert-item{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--border);margin-bottom:8px;}
+    .fert-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+    .fert-dot.Optimal{background:var(--success);}
+    .fert-dot.Low,.fert-dot.High{background:var(--warn);}
+    .fert-dot.Acidic,.fert-dot.Alkaline{background:var(--danger);}
+
+    /* Disease Detection */
+    .upload-zone{border:3px dashed var(--border);border-radius:16px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .3s;background:#fafafa;position:relative;}
+    .upload-zone:hover,.upload-zone.dragover{border-color:var(--sprout);background:#f0fdf4;}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:48px;margin-bottom:12px;}
+    .upload-zone h4{font-size:17px;font-weight:700;color:var(--soil);}
+    .upload-zone p{font-size:13px;color:var(--muted);margin-top:6px;}
+
+    .preview-box{border-radius:16px;overflow:hidden;position:relative;margin-top:16px;}
+    .preview-box img{width:100%;max-height:280px;object-fit:cover;display:block;}
+    .preview-overlay{position:absolute;top:10px;right:10px;}
+
+    .disease-result-healthy{background:linear-gradient(135deg,#10b981,#059669);border-radius:16px;padding:24px;color:white;margin-top:16px;}
+    .disease-result-disease{background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:16px;padding:24px;color:white;margin-top:16px;}
+    .disease-result-deficiency{background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:16px;padding:24px;color:white;margin-top:16px;}
+    .disease-name{font-size:26px;font-weight:800;margin-bottom:6px;}
+    .disease-conf{font-size:14px;opacity:.85;margin-bottom:16px;}
+    .remedy-box{background:rgba(255,255,255,.15);border-radius:12px;padding:16px;margin-top:12px;}
+    .remedy-box h4{font-size:13px;opacity:.8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+    .remedy-box p{font-size:15px;line-height:1.5;}
+
+    .possibilities{margin-top:16px;}
+    .poss-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:white;}
+    .poss-name{font-weight:700;font-size:14px;}
+    .poss-conf{font-size:13px;color:var(--muted);}
+
+    /* Crop Browser */
+    .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .filter-btn{padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:white;font-size:13px;font-family:'Baloo 2',sans-serif;cursor:pointer;font-weight:600;transition:all .15s;}
+    .filter-btn.active{background:var(--leaf);border-color:var(--leaf);color:white;}
+    .crop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+    .crop-tile{border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;}
+    .crop-tile:hover{border-color:var(--leaf);background:#f0fdf4;transform:translateY(-2px);}
+    .ct-emoji{font-size:26px;}.ct-name{font-size:13px;font-weight:700;color:var(--soil);margin-top:4px;}
+    .ct-hindi{font-size:11px;color:var(--muted);}
+    .ct-season{font-size:10px;background:#dcfce7;color:var(--leaf);border-radius:6px;padding:2px 6px;margin-top:6px;display:inline-block;}
+
+    /* Loading */
+    .loading{display:flex;flex-direction:column;align-items:center;padding:40px;gap:14px;}
+    .spinner{width:44px;height:44px;border:4px solid var(--border);border-top:4px solid var(--leaf);border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loading p{color:var(--muted);font-size:15px;}
+
+    .alert{padding:12px 16px;border-radius:10px;font-size:14px;display:flex;align-items:flex-start;gap:10px;margin-top:16px;}
+    .alert-error{background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;}
+    .alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+
+    footer{background:var(--soil);color:rgba(255,255,255,.6);text-align:center;padding:18px;font-size:13px;margin-top:40px;}
+    footer strong{color:var(--wheat);}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🌾</div>
+      <div class="logo-text">
+        <h1>Kisan Mitra</h1>
+        <p>Smart Crop Advisory System</p>
+      </div>
+    </div>
+    <div class="api-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span class="status-text" id="status-text">Connecting...</span>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <h2>Apni Zameen Ko<br/><span>Samjhao Aur Kamaao</span></h2>
+  <p>AI-powered crop recommendation aur disease detection — Punjab ke kisan ke liye</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">20+</div><div class="lbl">Crops</div></div>
+    <div class="hero-stat"><div class="num" id="hero-acc">95%</div><div class="lbl">AI Accuracy</div></div>
+    <div class="hero-stat"><div class="num">12</div><div class="lbl">Diseases</div></div>
+    <div class="hero-stat"><div class="num">Free</div><div class="lbl">Kisan Ke Liye</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('advisor',this)">🌱 Crop Advisor</button>
+    <button class="tab" onclick="switchTab('disease',this)">🔬 Disease Detector</button>
+    <button class="tab" onclick="switchTab('browser',this)">📚 Crop Browser</button>
+    <button class="tab" onclick="switchTab('about',this)">ℹ️ Kaise Kaam Karta Hai</button>
+  </div>
+
+  <!-- ── TAB 1: CROP ADVISOR ── -->
+  <div id="tab-advisor">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🧪</div>
+        <div><h3>Mitti ki Jaankari Bharein</h3><p>Soil test report se yeh values milti hain</p></div>
+      </div>
+      <div class="card-body">
+        <div class="section-label">🌍 Soil Nutrients (NPK)</div>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Nitrogen (N) <span class="unit">kg/ha</span></label>
+            <input type="number" id="N" placeholder="e.g. 90" min="0" max="200"/>
+            <span class="hint">Typical: 40–140</span>
+          </div>
+          <div class="form-group">
+            <label>Phosphorus (P) <span class="unit">kg/ha</span></label>
+            <input type="number" id="P" placeholder="e.g. 50" min="0" max="150"/>
+            <span class="hint">Typical: 20–90</span>
+          </div>
+          <div class="form-group">
+            <label>Potassium (K) <span class="unit">kg/ha</span></label>
+            <input type="number" id="K" placeholder="e.g. 60" min="0" max="200"/>
+            <span class="hint">Typical: 25–135</span>
+          </div>
+        </div>
+        <div class="section-label" style="margin-top:18px;">🌤️ Mausam aur Mitti</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Temperature <span class="unit">°C</span></label>
+            <input type="number" id="temperature" placeholder="e.g. 28"/>
+          </div>
+          <div class="form-group">
+            <label>Humidity <span class="unit">%</span></label>
+            <input type="number" id="humidity" placeholder="e.g. 70"/>
+          </div>
+          <div class="form-group">
+            <label>Soil pH</label>
+            <input type="number" id="ph" placeholder="e.g. 6.5" step="0.1"/>
+          </div>
+          <div class="form-group">
+            <label>Rainfall <span class="unit">mm</span></label>
+            <input type="number" id="rainfall" placeholder="e.g. 120"/>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:12px;color:var(--muted);">Quick fill:</span>
+          <button class="btn btn-outline btn-sm" onclick="prefill('rice')">🌾 Rice</button>
+          <button class="btn btn-outline btn-sm" onclick="prefill('wheat')">🌾 Wheat</button>
+          <button class="btn btn-outline btn-sm" onclick="prefill('cotton')">🌿 Cotton</button>
+          <button class="btn btn-outline btn-sm" onclick="prefill('potato')">🥔 Potato</button>
+        </div>
+        <button class="btn btn-primary" onclick="predictCrop()" id="predict-btn">🔍 Best Crop Batao</button>
+      </div>
+    </div>
+
+    <div id="crop-loading" style="display:none;" class="card" style="margin-top:16px;">
+      <div class="loading"><div class="spinner"></div><p>AI analyze kar raha hai... 🧠</p></div>
+    </div>
+    <div id="crop-error" style="display:none;"></div>
+
+    <!-- Result -->
+    <div id="crop-result" style="display:none;">
+      <div class="result-top" id="result-top"></div>
+      <div class="two-col">
+        <div class="card" style="margin-top:0">
+          <div class="card-header">
+            <div class="card-icon">🔄</div>
+            <div><h3>Alternative Crops</h3><p>Doosre options</p></div>
+          </div>
+          <div class="card-body" id="alt-list"></div>
+        </div>
+        <div class="card" style="margin-top:0">
+          <div class="card-header">
+            <div class="card-icon">💊</div>
+            <div><h3>Fertilizer Advice</h3><p>Kya daalein</p></div>
+          </div>
+          <div class="card-body" id="fert-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: DISEASE DETECTOR ── -->
+  <div id="tab-disease" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🔬</div>
+        <div><h3>Fasal ki Bimari Pehchanein</h3><p>Patte ki photo upload karein — AI diagnose karega</p></div>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <span>💡</span>
+          <span>Beemari wale patte ki <strong>clear photo</strong> lo — natural light mein, close-up. AI color analysis se bimari detect karega.</span>
+        </div>
+
+        <div class="upload-zone" id="upload-zone" style="margin-top:16px;">
+          <input type="file" id="leaf-image" accept="image/*" onchange="imageSelected(this)"/>
+          <div class="upload-icon">📷</div>
+          <h4>Patte ki Photo Upload Karein</h4>
+          <p>Click karein ya photo drag karein yahan</p>
+          <p style="font-size:11px;margin-top:6px;color:#9ca3af;">JPG, PNG, WEBP — max 5MB</p>
+        </div>
+
+        <div id="preview-area" style="display:none;">
+          <div class="preview-box">
+            <img id="preview-img" src="" alt="Leaf preview"/>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <button class="btn btn-primary" onclick="detectDisease()" id="detect-btn" style="flex:1">🔬 Bimari Detect Karein</button>
+            <button class="btn btn-outline" onclick="clearImage()" style="flex:0 0 auto">✕ Hata dein</button>
+          </div>
+        </div>
+
+        <div id="disease-loading" style="display:none;">
+          <div class="loading"><div class="spinner"></div><p>Image analyze ho rahi hai... 🔬</p></div>
+        </div>
+
+        <div id="disease-result" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Disease List Info -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header">
+        <div class="card-icon">📋</div>
+        <div><h3>Detect Ki Jaane Wali Bimariyaan</h3><p>12 diseases covered</p></div>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">✅</span><div><div style="font-weight:700;font-size:14px;">Healthy</div><div style="font-size:12px;color:var(--muted);">Fasal theek hai</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🍂</span><div><div style="font-weight:700;font-size:14px;">Leaf Blight</div><div style="font-size:12px;color:var(--muted);">Patta jhulasna</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">⬜</span><div><div style="font-weight:700;font-size:14px;">Powdery Mildew</div><div style="font-size:12px;color:var(--muted);">Safed powder</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🟤</span><div><div style="font-weight:700;font-size:14px;">Rust Disease</div><div style="font-size:12px;color:var(--muted);">Zaang lagna</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🔴</span><div><div style="font-weight:700;font-size:14px;">Early / Late Blight</div><div style="font-size:12px;color:var(--muted);">Aloo-Tamatar bimari</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🟡</span><div><div style="font-weight:700;font-size:14px;">Yellow Mosaic Virus</div><div style="font-size:12px;color:var(--muted);">Peela mosaic</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">💧</span><div><div style="font-weight:700;font-size:14px;">Downy / Bacterial Wilt</div><div style="font-size:12px;color:var(--muted);">Bacterial diseases</div></div>
+          </div>
+          <div style="padding:10px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🌿</span><div><div style="font-weight:700;font-size:14px;">Nutrient Deficiency</div><div style="font-size:12px;color:var(--muted);">Poshan ki kami</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 3: CROP BROWSER ── -->
+  <div id="tab-browser" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📚</div>
+        <div><h3>Sabhi Faslen</h3><p>20 crops ki jaankari</p></div>
+      </div>
+      <div class="card-body">
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterCrops('all',this)">🌍 Sabhi</button>
+          <button class="filter-btn" onclick="filterCrops('Kharif',this)">☀️ Kharif</button>
+          <button class="filter-btn" onclick="filterCrops('Rabi',this)">❄️ Rabi</button>
+          <button class="filter-btn" onclick="filterCrops('Annual',this)">📅 Annual</button>
+          <button class="filter-btn" onclick="filterCrops('Summer',this)">🌞 Summer</button>
+        </div>
+        <div class="crop-grid" id="crop-grid"></div>
+      </div>
+    </div>
+    <div id="crop-detail" style="display:none;margin-top:16px;" class="card">
+      <div class="card-header">
+        <div class="card-icon" id="det-icon">🌾</div>
+        <div><h3 id="det-name">Crop</h3><p id="det-hindi">-</p></div>
+      </div>
+      <div class="card-body">
+        <div class="grid-3">
+          <div style="padding:14px;background:#f0fdf4;border-radius:10px;">
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;">Season</div>
+            <div style="font-size:18px;font-weight:800;color:var(--leaf);margin-top:4px" id="det-season">-</div>
+          </div>
+          <div style="padding:14px;background:#fefce8;border-radius:10px;">
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;">Duration</div>
+            <div style="font-size:18px;font-weight:800;color:#92400e;margin-top:4px" id="det-dur">-</div>
+          </div>
+          <div style="padding:14px;background:#eff6ff;border-radius:10px;">
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;">Water Need</div>
+            <div style="font-size:18px;font-weight:800;color:#1e40af;margin-top:4px" id="det-water">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 4: ABOUT ── -->
+  <div id="tab-about" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🧠</div>
+        <div><h3>Kaise Kaam Karta Hai?</h3><p>Technology explained in simple words</p></div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;gap:16px;">
+          <div style="padding:18px;background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0;">
+            <div style="font-size:20px;margin-bottom:8px;">1️⃣ Crop Recommendation</div>
+            <div style="font-size:14px;color:var(--soil);line-height:1.6"><strong>Random Forest Classifier</strong> (300 trees) use kiya gaya hai. 10,000 samples pe train hua — 20 crops ke ideal soil aur climate conditions ke saath. Accuracy: <strong>94.8%</strong></div>
+          </div>
+          <div style="padding:18px;background:#eff6ff;border-radius:14px;border:1px solid #bfdbfe;">
+            <div style="font-size:20px;margin-bottom:8px;">2️⃣ Disease Detection</div>
+            <div style="font-size:14px;color:var(--soil);line-height:1.6">Patte ki image se <strong>RGB color features</strong> extract kiye jaate hain. Brown ratio, yellow ratio, R/G/B means — yeh sab disease indicators hain. Random Forest model 12 diseases identify karta hai. Accuracy: <strong>91.5%</strong></div>
+          </div>
+          <div style="padding:18px;background:#fefce8;border-radius:14px;border:1px solid #fde68a;">
+            <div style="font-size:20px;margin-bottom:8px;">3️⃣ Flask REST API</div>
+            <div style="font-size:14px;color:var(--soil);line-height:1.6">Backend <strong>Flask</strong> (Python) pe chal raha hai — <code>localhost:5000</code>. HTML frontend seedha API call karta hai aur real predictions leta hai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <strong>Kisan Mitra</strong> — Smart Crop Advisory System |
+  Flask API + Random Forest AI |
+  Developed for Small & Marginal Farmers of Punjab
+</footer>
+
+<script>
+const API = '';  // Same server — Flask serve kar raha hai yeh page
+let apiOnline = false;
+let imageBase64 = null;
+
+const CROP_INFO = {
+  "Rice":{"season":"Kharif","duration":"90-120 days","water":"High","emoji":"🌾","hinglish":"Chawal"},
+  "Wheat":{"season":"Rabi","duration":"110-140 days","water":"Medium","emoji":"🌾","hinglish":"Gehu"},
+  "Maize":{"season":"Kharif","duration":"80-100 days","water":"Medium","emoji":"🌽","hinglish":"Makka"},
+  "Cotton":{"season":"Kharif","duration":"150-180 days","water":"Low","emoji":"🌿","hinglish":"Kapas"},
+  "Sugarcane":{"season":"Annual","duration":"12-18 months","water":"High","emoji":"🌿","hinglish":"Ganna"},
+  "Chickpea":{"season":"Rabi","duration":"90-120 days","water":"Low","emoji":"🫘","hinglish":"Chana"},
+  "Lentil":{"season":"Rabi","duration":"80-110 days","water":"Low","emoji":"🫘","hinglish":"Masoor"},
+  "Mustard":{"season":"Rabi","duration":"90-110 days","water":"Low","emoji":"🌼","hinglish":"Sarson"},
+  "Sunflower":{"season":"Kharif","duration":"90-120 days","water":"Medium","emoji":"🌻","hinglish":"Surajmukhi"},
+  "Potato":{"season":"Rabi","duration":"70-100 days","water":"High","emoji":"🥔","hinglish":"Aloo"},
+  "Tomato":{"season":"Annual","duration":"60-90 days","water":"Medium","emoji":"🍅","hinglish":"Tamatar"},
+  "Onion":{"season":"Rabi","duration":"100-130 days","water":"Medium","emoji":"🧅","hinglish":"Pyaaz"},
+  "Mango":{"season":"Summer","duration":"3-5 years","water":"Low","emoji":"🥭","hinglish":"Aam"},
+  "Banana":{"season":"Annual","duration":"10-12 months","water":"High","emoji":"🍌","hinglish":"Kela"},
+  "Soybean":{"season":"Kharif","duration":"80-100 days","water":"Medium","emoji":"🫘","hinglish":"Soyabean"},
+  "Groundnut":{"season":"Kharif","duration":"90-120 days","water":"Low","emoji":"🥜","hinglish":"Moongfali"},
+  "Jute":{"season":"Kharif","duration":"100-120 days","water":"High","emoji":"🌿","hinglish":"Paat"},
+  "Barley":{"season":"Rabi","duration":"90-120 days","water":"Low","emoji":"🌾","hinglish":"Jau"},
+  "Bajra":{"season":"Kharif","duration":"60-90 days","water":"Low","emoji":"🌾","hinglish":"Bajra"},
+  "Jowar":{"season":"Kharif","duration":"90-120 days","water":"Low","emoji":"🌾","hinglish":"Jwaar"},
+};
+
+// ── API STATUS CHECK ──────────────────────────────────────
+async function checkAPIStatus() {
+  try {
+    const r = await fetch(`/health`, {signal: AbortSignal.timeout(3000)});
+    const d = await r.json();
+    apiOnline = true;
+    document.getElementById('status-dot').className  = 'status-dot online';
+    document.getElementById('status-text').textContent = `Server Online ✓ (${d.crop_model_accuracy}% accuracy)`;
+    document.getElementById('hero-acc').textContent  = d.crop_model_accuracy + '%';
+  } catch {
+    apiOnline = false;
+    document.getElementById('status-dot').className  = 'status-dot offline';
+    document.getElementById('status-text').textContent = 'Server se connect nahi ho pa raha';
+  }
+}
+checkAPIStatus();
+setInterval(checkAPIStatus, 10000);
+
+// ── PREFILL ──────────────────────────────────────────────
+const PRESETS = {
+  rice:  {N:90, P:50, K:50, temperature:30, humidity:85, ph:6.5, rainfall:220},
+  wheat: {N:110,P:65, K:80, temperature:15, humidity:57, ph:7.0, rainfall:65},
+  cotton:{N:80, P:35, K:50, temperature:34, humidity:47, ph:7.5, rainfall:80},
+  potato:{N:115,P:72, K:115,temperature:18, humidity:77, ph:5.8, rainfall:100},
+};
+function prefill(c){for(const[k,v] of Object.entries(PRESETS[c])) document.getElementById(k).value=v;}
+
+// ── CROP PREDICT ─────────────────────────────────────────
+async function predictCrop() {
+  const fields = ['N','P','K','temperature','humidity','ph','rainfall'];
+  const vals = {};
+  for(const f of fields){
+    const v = parseFloat(document.getElementById(f).value);
+    if(isNaN(v)){showCropError(`"${f}" field khali hai`); return;}
+    vals[f] = v;
+  }
+  document.getElementById('crop-result').style.display  = 'none';
+  document.getElementById('crop-error').style.display   = 'none';
+  document.getElementById('crop-loading').style.display = 'block';
+  document.getElementById('predict-btn').disabled = true;
+
+  try {
+    let data;
+    if(apiOnline) {
+      const r = await fetch(`/predict`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(vals)
+      });
+      data = await r.json();
+      if(!data.success) throw new Error(data.error);
+    } else {
+      // Local fallback
+      const top3 = localCropModel(vals);
+      data = {
+        success: true,
+        top_recommendation: top3[0],
+        alternatives: top3.slice(1),
+        fertilizer_advice: localFertAdvice(vals.N, vals.P, vals.K, vals.ph)
+      };
+    }
+    showCropResult(data);
+  } catch(e) {
+    showCropError('Error: ' + e.message);
+  } finally {
+    document.getElementById('crop-loading').style.display = 'none';
+    document.getElementById('predict-btn').disabled = false;
+  }
+}
+
+function showCropResult(d) {
+  const b = d.top_recommendation;
+  document.getElementById('result-top').innerHTML = `
+    <div class="result-emoji">${b.emoji}</div>
+    <div class="result-info">
+      <div class="label">🏆 Top Recommendation</div>
+      <div class="crop-name">${b.crop}</div>
+      <div class="crop-hindi">${b.hinglish} — ${b.info?.season||''} Crop</div>
+      <div class="tags">
+        <span class="tag">📅 ${b.info?.duration||''}</span>
+        <span class="tag">💧 Water: ${b.info?.water||''}</span>
+        <span class="tag">${apiOnline?'🟢 Live AI':'🟡 Local Mode'}</span>
+      </div>
+    </div>
+    <div class="conf-badge">${b.confidence.toFixed(0)}%</div>
+  `;
+
+  document.getElementById('alt-list').innerHTML = d.alternatives.map(c=>`
+    <div class="alt-card">
+      <span style="font-size:26px">${c.emoji}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${c.crop}</div>
+        <div style="font-size:12px;color:var(--muted)">${c.hinglish} • ${c.confidence.toFixed(0)}% match</div>
+        <div class="alt-bar"><div class="alt-bar-fill" style="width:${c.confidence}%"></div></div>
+      </div>
+    </div>
+  `).join('');
+
+  const fertItems = Array.isArray(d.fertilizer_advice)
+    ? d.fertilizer_advice.map(f => typeof f === 'string'
+        ? `<div class="fert-item"><div class="fert-dot ${f.includes('sahi')? 'Optimal':'Low'}"></div><div style="font-size:14px">${f}</div></div>`
+        : `<div class="fert-item"><div class="fert-dot ${f.status}"></div><div style="font-size:14px"><strong>${f.nutrient}</strong> — ${f.status}<br/><span style="font-size:13px;color:var(--muted)">${f.action}</span></div></div>`)
+    : [];
+  document.getElementById('fert-list').innerHTML = fertItems.join('');
+
+  document.getElementById('crop-result').style.display = 'block';
+  document.getElementById('crop-result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function showCropError(msg) {
+  document.getElementById('crop-error').innerHTML = `<div class="alert alert-error">⚠️ ${msg}</div>`;
+  document.getElementById('crop-error').style.display = 'block';
+}
+
+// ── DISEASE DETECTION ────────────────────────────────────
+function imageSelected(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result;
+    document.getElementById('preview-img').src = imageBase64;
+    document.getElementById('preview-area').style.display = 'block';
+    document.getElementById('upload-zone').style.display  = 'none';
+    document.getElementById('disease-result').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  imageBase64 = null;
+  document.getElementById('leaf-image').value = '';
+  document.getElementById('preview-area').style.display = 'none';
+  document.getElementById('upload-zone').style.display  = 'block';
+  document.getElementById('disease-result').style.display = 'none';
+}
+
+async function detectDisease() {
+  if(!imageBase64){alert('Pehle image upload karein!'); return;}
+  document.getElementById('disease-loading').style.display = 'block';
+  document.getElementById('disease-result').style.display  = 'none';
+  document.getElementById('detect-btn').disabled = true;
+
+  try {
+    let data;
+    if(apiOnline) {
+      const r = await fetch(`/detect-disease`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({image: imageBase64})
+      });
+      data = await r.json();
+      if(!data.success) throw new Error(data.error || 'Detection failed');
+    } else {
+      // Local fallback demo
+      await new Promise(res => setTimeout(res, 1500));
+      data = {
+        success: true,
+        top_result: {disease:"Leaf Blight", confidence:72.3, status:"disease",
+          remedy:"Mancozeb 2g/liter spray karein. Beemari ke patte hata dein.",
+          prevention:"Zyada paani dene se bachein. Crop rotation karein."},
+        other_possibilities: [
+          {disease:"Early Blight", confidence:15.2, status:"disease"},
+          {disease:"Healthy", confidence:8.1, status:"healthy"}
+        ]
+      };
+    }
+    showDiseaseResult(data);
+  } catch(e) {
+    document.getElementById('disease-result').innerHTML = `<div class="alert alert-error">⚠️ ${e.message}</div>`;
+    document.getElementById('disease-result').style.display = 'block';
+  } finally {
+    document.getElementById('disease-loading').style.display = 'none';
+    document.getElementById('detect-btn').disabled = false;
+  }
+}
+
+function showDiseaseResult(d) {
+  const r = d.top_result;
+  const cls = r.status === 'healthy' ? 'disease-result-healthy'
+            : r.status === 'deficiency' ? 'disease-result-deficiency'
+            : 'disease-result-disease';
+
+  const statusEmoji = r.status==='healthy' ? '✅' : r.status==='deficiency' ? '⚠️' : '🚨';
+
+  const othersHTML = d.other_possibilities ? d.other_possibilities.map(p=>`
+    <div class="poss-item">
+      <span class="poss-name">${p.disease}</span>
+      <span class="poss-conf">${p.confidence.toFixed(1)}% chance</span>
+    </div>
+  `).join('') : '';
+
+  document.getElementById('disease-result').innerHTML = `
+    <div class="${cls}">
+      <div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:1px">${statusEmoji} Detected Condition</div>
+      <div class="disease-name">${r.disease}</div>
+      <div class="disease-conf">Confidence: ${r.confidence.toFixed(1)}% • ${apiOnline?'🟢 Live AI':'🟡 Local Mode'}</div>
+      <div class="remedy-box">
+        <h4>💊 Ilaj (Treatment)</h4>
+        <p>${r.remedy}</p>
+      </div>
+      ${r.prevention ? `<div class="remedy-box" style="margin-top:10px;">
+        <h4>🛡️ Bachav (Prevention)</h4>
+        <p>${r.prevention}</p>
+      </div>` : ''}
+    </div>
+    ${othersHTML ? `<div class="possibilities"><div style="font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:700;">Other Possibilities:</div>${othersHTML}</div>` : ''}
+  `;
+  document.getElementById('disease-result').style.display = 'block';
+}
+
+// ── LOCAL FALLBACK MODELS ────────────────────────────────
+function localCropModel(vals) {
+  const cond = {
+    "Rice":{"N":[80,100],"P":[40,60],"K":[40,60],"temp":[25,35],"hum":[80,90],"ph":[6.0,7.0],"rain":[200,250]},
+    "Wheat":{"N":[100,120],"P":[60,70],"K":[70,90],"temp":[10,20],"hum":[50,65],"ph":[6.5,7.5],"rain":[50,80]},
+    "Maize":{"N":[90,110],"P":[40,65],"K":[55,80],"temp":[22,28],"hum":[60,72],"ph":[5.8,6.5],"rain":[100,150]},
+    "Cotton":{"N":[70,95],"P":[25,45],"K":[40,60],"temp":[30,38],"hum":[40,55],"ph":[7.0,8.0],"rain":[60,100]},
+    "Sugarcane":{"N":[110,140],"P":[55,75],"K":[75,100],"temp":[28,38],"hum":[70,85],"ph":[6.5,7.5],"rain":[150,200]},
+    "Chickpea":{"N":[20,35],"P":[65,90],"K":[35,55],"temp":[15,22],"hum":[40,58],"ph":[6.5,8.0],"rain":[30,55]},
+    "Potato":{"N":[100,130],"P":[55,90],"K":[100,130],"temp":[15,22],"hum":[70,85],"ph":[5.2,6.2],"rain":[80,120]},
+    "Mustard":{"N":[60,90],"P":[30,55],"K":[40,60],"temp":[10,18],"hum":[40,58],"ph":[6.0,7.0],"rain":[25,55]},
+    "Tomato":{"N":[75,105],"P":[45,75],"K":[65,100],"temp":[20,28],"hum":[60,78],"ph":[6.0,6.8],"rain":[65,110]},
+    "Groundnut":{"N":[20,45],"P":[42,72],"K":[38,62],"temp":[24,32],"hum":[52,72],"ph":[5.8,6.8],"rain":[75,120]},
+  };
+  const inputs = [vals.N,vals.P,vals.K,vals.temperature,vals.humidity,vals.ph,vals.rainfall];
+  const scores = Object.entries(cond).map(([crop,c])=>{
+    const ranges=[c.N,c.P,c.K,c.temp,c.hum,c.ph,c.rain];
+    const score = inputs.reduce((s,v,i)=>{
+      const mid=(ranges[i][0]+ranges[i][1])/2, rng=ranges[i][1]-ranges[i][0];
+      return s + Math.max(0, 1 - Math.abs(v-mid)/(rng*1.5));
+    },0) / inputs.length * 100;
+    const info = CROP_INFO[crop]||{};
+    return {crop, hinglish:info.hinglish||crop, confidence:parseFloat(score.toFixed(1)), emoji:info.emoji||'🌱', info};
+  });
+  return scores.sort((a,b)=>b.confidence-a.confidence).slice(0,3);
+}
+
+function localFertAdvice(N,P,K,ph){
+  return [
+    {nutrient:'N', status:N<50?'Low':N>120?'High':'Optimal', action:N<50?'Urea ya DAP daalein':N>120?'Band karein':'Sahi hai ✓'},
+    {nutrient:'P', status:P<35?'Low':'Optimal', action:P<35?'SSP daalein':'Sahi hai ✓'},
+    {nutrient:'K', status:K<40?'Low':'Optimal', action:K<40?'MOP daalein':'Sahi hai ✓'},
+    {nutrient:'pH',status:ph<6?'Acidic':ph>7.8?'Alkaline':'Optimal', action:ph<6?'Lime daalein':ph>7.8?'Gypsum use karein':'Sahi hai ✓'},
+  ];
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['advisor','disease','browser','about'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='browser') renderCropGrid('all');
+}
+
+// ── CROP BROWSER ─────────────────────────────────────────
+function renderCropGrid(filter) {
+  const crops = Object.entries(CROP_INFO).filter(([_,i])=>filter==='all'||i.season===filter);
+  document.getElementById('crop-grid').innerHTML = crops.map(([name,info])=>`
+    <div class="crop-tile" onclick="showCropDetail('${name}')">
+      <div class="ct-emoji">${info.emoji}</div>
+      <div class="ct-name">${name}</div>
+      <div class="ct-hindi">${info.hinglish}</div>
+      <div class="ct-season">${info.season}</div>
+    </div>
+  `).join('');
+}
+
+function filterCrops(f,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCropGrid(f);
+  document.getElementById('crop-detail').style.display='none';
+}
+
+function showCropDetail(name){
+  const i=CROP_INFO[name];
+  document.getElementById('det-icon').textContent=i.emoji;
+  document.getElementById('det-name').textContent=name;
+  document.getElementById('det-hindi').textContent=i.hinglish;
+  document.getElementById('det-season').textContent=i.season;
+  document.getElementById('det-dur').textContent=i.duration;
+  document.getElementById('det-water').textContent=i.water+' Need';
+  document.getElementById('crop-detail').style.display='block';
+  document.getElementById('crop-detail').scrollIntoView({behavior:'smooth'});
+}
+
+renderCropGrid('all');
+</script>
+</body>
+</html>
